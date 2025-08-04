@@ -1,9 +1,9 @@
-# bot/modules/notes.py
+# modules/notes.py
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from bot.utils.database import notes_collection
-from bot.utils.helpers import is_admin
+from utils.database import notes_collection
+from utils.helpers import is_admin
 
 @Client.on_message(filters.command(["savenote", "!savenote"]) & filters.group)
 async def save_note(client: Client, message: Message):
