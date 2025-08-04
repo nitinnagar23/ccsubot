@@ -1,9 +1,9 @@
-from pyrogram.types import Message
 from pyrogram.enums import ChatType
+from pyrogram.types import ChatMember
 from config import OWNER_ID
 
 
-def get_user_from_message(message: Message):
+def get_user_from_message(message):
     if message.reply_to_message:
         return message.reply_to_message.from_user
     if message.entities:
@@ -36,7 +36,8 @@ def format_time(seconds: int) -> str:
 
 
 def is_owner(user_id: int) -> bool:
-    """
-    Check if a given user_id is one of the bot owners.
-    """
     return user_id in OWNER_ID
+
+
+def is_admin(member: ChatMember) -> bool:
+    return member.status in ["administrator", "creator"]
