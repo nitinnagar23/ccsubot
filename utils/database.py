@@ -16,3 +16,7 @@ repeatsdb = db.repeats
 fsubdb = db.fsub
 topicsdb = db.topics
 miscdb = db.misc
+
+# ✅ Fix: define init_db so main.py doesn't break
+async def init_db():
+    pass  # Optionally add collection setup logic here
