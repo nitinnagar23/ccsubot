@@ -1,5 +1,6 @@
 from pyrogram.types import Message
 from pyrogram.enums import ChatType
+from config import OWNER_ID
 
 
 def get_user_from_message(message: Message):
@@ -32,3 +33,10 @@ def format_time(seconds: int) -> str:
         time_parts.append(f"{sec}s")
 
     return " ".join(time_parts)
+
+
+def is_owner(user_id: int) -> bool:
+    """
+    Check if a given user_id is one of the bot owners.
+    """
+    return user_id in OWNER_ID
