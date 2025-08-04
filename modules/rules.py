@@ -1,9 +1,9 @@
-# bot/modules/rules.py
+# modules/rules.py
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from bot.utils.database import rules_db
-from bot.utils.helpers import is_admin
+from utils.database import rules_db
+from utils.helpers import is_admin
 
 @Client.on_message(filters.command(["setrules", "!setrules"]) & filters.group)
 async def set_rules(client: Client, message: Message):
