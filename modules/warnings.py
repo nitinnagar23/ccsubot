@@ -1,9 +1,9 @@
-# bot/modules/warnings.py
+# modules/warnings.py
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from bot.utils.database import db
-from bot.utils.helpers import is_admin
+from utils.database import db
+from utils.helpers import is_admin
 
 WARN_LIMIT = 3
 
