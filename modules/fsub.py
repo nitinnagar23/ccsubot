@@ -1,4 +1,4 @@
-# bot/modules/fsub.py
+# modules/fsub.py
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
