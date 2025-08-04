@@ -1,10 +1,10 @@
-# bot/modules/misc.py
+# modules/misc.py
 
 import time
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from bot import START_TIME
-from bot.utils.helpers import get_readable_time
+from main import START_TIME
+from utils.helpers import get_readable_time
 from pyrogram.errors import FloodWait
 import asyncio
 import platform
