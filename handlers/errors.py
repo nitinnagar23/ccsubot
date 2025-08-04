@@ -1,4 +1,4 @@
-# bot/handlers/errors.py
+# handlers/errors.py
 
 from pyrogram import Client
 from pyrogram.errors import RPCError
