@@ -1,4 +1,4 @@
-# bot/handlers/help.py
+# handlers/help.py
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
