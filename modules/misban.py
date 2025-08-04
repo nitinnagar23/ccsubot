@@ -1,4 +1,4 @@
-#bot/modules/misban.py
+# modules/misban.py
 
 """ Misban
 
