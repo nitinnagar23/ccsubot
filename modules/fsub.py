@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from bot.utils.database import db
+from utils.database import db
 
 FSUB_COLLECTION = "force_subscribe_channels"
 
