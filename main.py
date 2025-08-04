@@ -1,17 +1,47 @@
-import logging from telegram.ext import Application from config import TOKEN, OWNER_ID from modules import load_all_modules from utils.startup import startup_check
+import logging
+import asyncio
+from pyrogram import Client
+from pyrogram.handlers import MessageHandler
+from config import API_ID, API_HASH, BOT_TOKEN
+from utils.database import init_db
+from utils.logger import setup_logger
+from utils.helpers import is_owner
+from modules import load_all_modules
+from utils.startup import startup_check
 
-logging.basicConfig( format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO )
+# Set up logging
+logger = setup_logger()
+logging.getLogger("pyrogram").setLevel(logging.WARNING)
 
-LOGGER = logging.getLogger(name)
+# Create the bot client
+bot = Client(
+    "modular_bot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN,
+    workers=4,
+    plugins=dict(root="bot/modules"),
+)
 
-async def main(): await startup_check()
+# Main startup function
+async def main():
+    await init_db()
+    await startup_check(bot)
+    logger.info("Loading modules...")
+    load_all_modules()
+    await bot.start()
+    me = await bot.get_me()
+    logger.info(f"Bot started as @{me.username} (ID: {me.id})")
+    print("Bot is running. Press Ctrl+C to stop.")
+    await idle()
+    await bot.stop()
+    logger.info("Bot stopped.")
 
-application = Application.builder().token(TOKEN).build()
+# Graceful shutdown support
+from pyrogram.idle import idle
 
-load_all_modules(application)
-
-LOGGER.info("Bot started!")
-await application.run_polling()
-
-if name == 'main': import asyncio asyncio.run(m
-ain())
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("Bot stopped by user.")
