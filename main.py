@@ -4,7 +4,7 @@ from pyrogram import Client
 from pyrogram.handlers import MessageHandler
 from config import API_ID, API_HASH, BOT_TOKEN
 from utils.database import init_db
-from utils.logger import setup_logger
+from services.logger import setup_logger
 from utils.helpers import is_owner
 from modules import load_all_modules
 from utils.startup import startup_check
