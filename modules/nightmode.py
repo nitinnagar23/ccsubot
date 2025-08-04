@@ -1,10 +1,10 @@
-# bot/modules/nightmode.py
+# modules/nightmode.py
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from datetime import datetime, time
-from bot.utils.database import nightmode_db
-from bot.utils.helpers import is_admin
+from utils.database import nightmode_db
+from utils.helpers import is_admin
 
 @Client.on_message(filters.command(["nightmode", "!nightmode"]) & filters.group)
 async def set_night_mode(client: Client, message: Message):
