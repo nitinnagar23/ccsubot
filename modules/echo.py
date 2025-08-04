@@ -1,9 +1,9 @@
-# bot/modules/echo.py
+# modules/echo.py
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-from bot.utils.helpers import is_admin
+from utils.helpers import is_admin
 
 
 @Client.on_message(filters.command(["echo", "!echo"]))
