@@ -1,9 +1,9 @@
-# bot/modules/help_menu.py
+# modules/help_menu.py
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from bot.utils.pagination import paginate_help
-from bot.modules import __all__ as loaded_modules
+from utils.pagination import paginate_help
+from modules import __all__ as loaded_modules
 
 HELP_MODULES = {
     mod.__name__.split('.')[-1]: mod.__doc__ or "No description available."
