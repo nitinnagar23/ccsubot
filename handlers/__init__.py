@@ -1,4 +1,4 @@
-# bot/handlers/__init__.py
+# handlers/__init__.py
 
 from .start import *
 from .help import *
