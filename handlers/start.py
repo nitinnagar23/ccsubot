@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from bot.config import OWNER_ID
+from config import OWNER_ID
 
 @Client.on_message(filters.command("start") & filters.private)
 async def start_private(client: Client, message: Message):
