@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from utils.database import notes_collection
+from utils.database import notesdb
 from utils.helpers import is_admin
 
 @Client.on_message(filters.command(["savenote", "!savenote"]) & filters.group)
