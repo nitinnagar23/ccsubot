@@ -1,8 +1,8 @@
-# bot/modules/reports.py
+# modules/reports.py
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from bot.utils.helpers import get_admins
+from utils.helpers import get_admins
 
 REPORT_TRIGGERS = ["@admin", "#report", "!report", "/report"]
 
