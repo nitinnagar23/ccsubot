@@ -1,8 +1,8 @@
-# bot/modules/cleanservice.py
+# modules/cleanservice.py
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, ChatPrivileges
-from bot.utils.database import db
+from utils.database import db
 
 
 @Client.on_message(filters.service)
