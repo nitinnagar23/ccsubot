@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from bot.utils.pagination import paginate_help
+from utils.pagination import paginate_help
 
 @Client.on_message(filters.command("help"))
 async def help_command(client: Client, message: Message):
