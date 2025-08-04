@@ -1,4 +1,4 @@
-# bot/modules/__init__.py
+# modules/__init__.py
 
 from . import (
     admin,
