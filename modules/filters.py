@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from utils.database import filters_collection
+from utils.database import filtersdb
 from utils.helpers import is_admin
 
 @Client.on_message(filters.command(["addfilter", "!addfilter"]) & filters.group)
