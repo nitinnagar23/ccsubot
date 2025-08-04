@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from utils.database import db
+from utils.database import warnsdb
 from utils.helpers import is_admin
 
 WARN_LIMIT = 3
