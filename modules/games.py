@@ -1,4 +1,4 @@
-# bot/modules/games.py
+# modules/games.py
 
 import random
 from pyrogram import Client, filters
