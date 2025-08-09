@@ -22,6 +22,7 @@ def load_module(application):
         "filter": add_filter,
         "filters": list_filters,
         "stop": stop_filter,
+        "stopall": stopall_command,  # <-- FIX #1: Added the /stopall handler
     }
 
     for cmd_name, handler_func in handlers.items():
@@ -30,6 +31,9 @@ def load_module(application):
             filters.Regex(rf'^{re.escape("!")}{cmd_name}(\s|$)'),
             handler_func
         ))
+
+    # --- FIX #2: Added the missing callback handler ---
+    application.add_handler(CallbackQueryHandler(stopall_callback, pattern="^filter:stopall_"))
 
     # Add the main listener for all text and command messages
     application.add_handler(MessageHandler(
