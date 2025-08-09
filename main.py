@@ -5,11 +5,17 @@ import pathlib
 import traceback
 import html
 import json
+import asyncio
+import nest_asyncio  # --- Solves the event loop conflict
+
 from telegram import Update
 from telegram.ext import ApplicationBuilder, PicklePersistence, ContextTypes
 from telegram.constants import ParseMode
 
 from keep_alive import keep_alive
+
+# --- Apply the patch to allow nested event loops in Replit ---
+nest_asyncio.apply()
 
 # --- Bot-wide Logging Setup ---
 logging.basicConfig(
@@ -25,6 +31,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     
     DEV_LOG_CHANNEL = os.environ.get("DEV_LOG_CHANNEL")
     if not DEV_LOG_CHANNEL:
+        print("DEV_LOG_CHANNEL not set. Cannot send error log.")
         return
 
     # Format the traceback
@@ -36,10 +43,12 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     message = (
         f"An exception was raised while handling an update\n\n"
         f"<b>Update:</b>\n<pre>{html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}</pre>\n\n"
+        f"<b>Context Chat Data:</b>\n<pre>{html.escape(str(context.chat_data))}</pre>\n\n"
+        f"<b>Context User Data:</b>\n<pre>{html.escape(str(context.user_data))}</pre>\n\n"
         f"<b>Traceback:</b>\n<pre>{html.escape(tb_string)}</pre>"
     )
     
-    # Split message if too long
+    # Split the message into chunks if it's too long for a single Telegram message
     for i in range(0, len(message), 4096):
         try:
             await context.bot.send_message(
@@ -59,7 +68,7 @@ async def main():
         logger.error("❌ BOT_TOKEN not found in environment variables!")
         return
         
-    # Create a persistence object
+    # Create a persistence object to save jobs across restarts
     persistence = PicklePersistence(filepath="bot_persistence")
 
     # Build the application with persistence and error handling
@@ -88,5 +97,4 @@ async def main():
 
 if __name__ == '__main__':
     keep_alive()
-    import asyncio
     asyncio.run(main())
