@@ -1,11 +1,5 @@
-# Telegram Bot Framework
-python-telegram-bot
-
-# For the Replit Keep-Alive Server
+python-telegram-bot[ext]
+pymongo[srv]
 Flask
-
-# For reading .env files
-python-dotenv
-
-# Asynchronous MongoDB Driver
-motor
+pytz
+google-generativeai
