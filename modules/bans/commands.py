@@ -1,15 +1,20 @@
 from telegram import Update, ChatPermissions
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
+from telegram.error import BadRequest
 
+# --- Local Imports ---
 from utils.decorators import admin_only, check_disabled
 from utils.parsers import extract_user
 from utils.permissions import is_user_admin, is_user_approved
 from utils.context import resolve_target_chat_id
 from utils.time import parse_duration, humanize_delta
-# Import our powerful, centralized helpers
 from utils.moderation import execute_punishment
+
+# --- Service Integrations ---
 from modules.log_channels.service import log_action
+from modules.cleaning_bot_messages.service import schedule_bot_message_deletion
+
 
 # --- Internal Helper to parse arguments ---
 async def _parse_user_duration_and_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -30,13 +35,15 @@ async def _parse_user_duration_and_reason(update: Update, context: ContextTypes.
     elif context.args:
         user_id, user_name = await extract_user(update, context)
         if user_id:
-            if len(context.args) > 1:
-                parsed_dur = parse_duration(context.args[1])
+            # Check for duration in the argument following the user identifier
+            arg_offset = 2 if context.args[0].isdigit() or context.args[0].startswith('@') else 1
+            if len(context.args) >= arg_offset:
+                parsed_dur = parse_duration(context.args[arg_offset-1])
                 if parsed_dur:
                     duration = parsed_dur
-                    reason = " ".join(context.args[2:])
+                    reason = " ".join(context.args[arg_offset:])
                 else:
-                    reason = " ".join(context.args[1:])
+                    reason = " ".join(context.args[arg_offset-1:])
 
     return user_id, user_name, duration, reason.strip()
 
@@ -96,7 +103,9 @@ async def _execute_moderation(update: Update, context: ContextTypes.DEFAULT_TYPE
     if not silent:
         feedback = f"User {target_name} has been **{action_string}**."
         if reason: feedback += f"\nReason: {reason}"
-        await update.message.reply_text(feedback, parse_mode=ParseMode.HTML)
+        sent_message = await update.message.reply_text(feedback, parse_mode=ParseMode.HTML)
+        # --- INTEGRATION: Schedule this confirmation message for deletion ---
+        schedule_bot_message_deletion(context, sent_message, "action")
 
 # --- Wrapper Command Handlers ---
 @admin_only
@@ -134,7 +143,7 @@ async def dkick(update: Update, context: ContextTypes.DEFAULT_TYPE): await _exec
 @admin_only
 async def skick(update: Update, context: ContextTypes.DEFAULT_TYPE): await _execute_moderation(update, context, 'kick', silent=True)
 
-# --- Un-Commands (Simpler Logic) ---
+# --- Un-Commands ---
 @admin_only
 async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     target_chat_id = await resolve_target_chat_id(update, context)
@@ -142,7 +151,9 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not target_id: return
     try:
         await context.bot.unban_chat_member(target_chat_id, target_id)
-        await update.message.reply_text(f"User {target_name} (`{target_id}`) has been unbanned.")
+        sent_message = await update.message.reply_text(f"User {target_name} (`{target_id}`) has been unbanned.")
+        # --- INTEGRATION: Schedule this confirmation message for deletion ---
+        schedule_bot_message_deletion(context, sent_message, "action")
     except BadRequest as e: await update.message.reply_text(f"Error: {e.message}")
 
 @admin_only
@@ -152,7 +163,9 @@ async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not target_id: return
     try:
         await context.bot.restrict_chat_member(target_chat_id, target_id, ChatPermissions(can_send_messages=True, can_send_media_messages=True, can_send_other_messages=True, can_add_web_page_previews=True))
-        await update.message.reply_text(f"User {target_name} (`{target_id}`) has been unmuted.")
+        sent_message = await update.message.reply_text(f"User {target_name} (`{target_id}`) has been unmuted.")
+        # --- INTEGRATION: Schedule this confirmation message for deletion ---
+        schedule_bot_message_deletion(context, sent_message, "action")
     except BadRequest as e: await update.message.reply_text(f"Error: {e.message}")
         
 # --- User Command ---
