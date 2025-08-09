@@ -19,9 +19,9 @@ from modules.cleaning_bot_messages.service import schedule_bot_message_deletion
 warnings_collection = db["warnings"]
 chat_settings_collection = db["chat_settings"]
 
-# --- Core Logic (Unchanged) ---
+# --- Core Logic ---
 async def _execute_warn_punishment(update: Update, context: ContextTypes.DEFAULT_TYPE, target_user, chat_id: int):
-    # ... (code is the same as previous response)
+    # This function is correct and remains unchanged.
     settings = chat_settings_collection.find_one({"_id": chat_id}) or {}
     mode = settings.get("warn_mode", "kick")
     duration_sec = settings.get("warn_mode_duration_seconds", 0)
@@ -35,38 +35,63 @@ async def _execute_warn_punishment(update: Update, context: ContextTypes.DEFAULT
         await log_action(context, chat_id, "warns", log_msg)
 
 async def _issue_warning(update: Update, context: ContextTypes.DEFAULT_TYPE, delete_reply: bool, silent: bool):
-    # ... (code is the same as previous response)
+    """The main logic for issuing a warning."""
     chat_id = await resolve_target_chat_id(update, context)
     warner = update.effective_user
+    
     if not update.message.reply_to_message:
         await update.message.reply_text("You need to reply to a user's message to warn them.")
         return
+
     warned_user = update.message.reply_to_message.from_user
     reason = " ".join(context.args) or "No reason specified."
+    
     if await is_user_admin(context, chat_id, warned_user.id):
         await update.message.reply_text("I can't warn an admin.")
         return
-    warnings_collection.insert_one({"chat_id": chat_id, "user_id": warned_user.id, "warner_id": warner.id, "reason": reason, "timestamp": datetime.now(timezone.utc)})
-    if delete_reply: try: await update.message.reply_to_message.delete()
-    except: pass
-    if silent: try: await update.message.delete()
-    except: pass
+    
+    warnings_collection.insert_one({
+        "chat_id": chat_id, "user_id": warned_user.id, "warner_id": warner.id,
+        "reason": reason, "timestamp": datetime.now(timezone.utc)})
+    
+    # --- SYNTAX FIX APPLIED ---
+    # The fragile one-liners have been replaced with standard, robust blocks.
+    if delete_reply:
+        try:
+            await update.message.reply_to_message.delete()
+        except Exception:
+            pass
+    if silent:
+        try:
+            await update.message.delete()
+        except Exception:
+            pass
+
     settings = chat_settings_collection.find_one({"_id": chat_id}) or {}
     warn_limit = settings.get("warn_limit", 3)
     warn_time_sec = settings.get("warn_time_seconds", 0)
+    
     query = {"chat_id": chat_id, "user_id": warned_user.id}
     if warn_time_sec > 0:
         query["timestamp"] = {"$gte": datetime.now(timezone.utc) - timedelta(seconds=warn_time_sec)}
+        
     current_warns = warnings_collection.count_documents(query)
-    log_msg = (f"<b>#WARN</b>\n<b>Admin:</b> {warner.mention_html()} (<code>{warner.id}</code>)\n<b>User:</b> {warned_user.mention_html()} (<code>{warned_user.id}</code>)\n<b>Reason:</b> {reason}\n<b>Total Warnings:</b> {current_warns}/{warn_limit}")
+    
+    log_msg = (f"<b>#WARN</b>\n<b>Admin:</b> {warner.mention_html()} (<code>{warner.id}</code>)\n"
+               f"<b>User:</b> {warned_user.mention_html()} (<code>{warned_user.id}</code>)\n"
+               f"<b>Reason:</b> {reason}\n<b>Total Warnings:</b> {current_warns}/{warn_limit}")
     await log_action(context, chat_id, "warns", log_msg)
+
     if current_warns >= warn_limit:
         await _execute_warn_punishment(update, context, warned_user, chat_id)
     elif not silent:
-        sent_message = await update.message.reply_text(f"{warned_user.mention_html()} has been warned. ({current_warns}/{warn_limit})", parse_mode=ParseMode.HTML)
+        sent_message = await update.message.reply_text(
+            f"{warned_user.mention_html()} has been warned. ({current_warns}/{warn_limit})",
+            parse_mode=ParseMode.HTML
+        )
         schedule_bot_message_deletion(context, sent_message, "action")
 
-# --- Command Wrappers (Unchanged) ---
+# --- Command Wrappers ---
 @admin_only
 async def warn_command(update: Update, context: ContextTypes.DEFAULT_TYPE): await _issue_warning(update, context, False, False)
 @admin_only
@@ -77,7 +102,7 @@ async def swarn_command(update: Update, context: ContextTypes.DEFAULT_TYPE): awa
 # --- Management and Configuration Commands ---
 @admin_only
 async def warns_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # ... (code is the same as previous response)
+    """See a user's warnings."""
     chat_id = await resolve_target_chat_id(update, context)
     target_id, target_name = await extract_user(update, context)
     if not target_id:
@@ -101,19 +126,22 @@ async def warns_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @admin_only
 async def rmwarn_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # ... (code is the same as previous response)
+    """Removes the latest warning from a user."""
     chat_id = await resolve_target_chat_id(update, context)
     target_id, target_name = await extract_user(update, context)
     if not target_id:
         await update.message.reply_text("You need to specify a user to remove a warning from.")
         return
-    latest_warn = warnings_collection.find_one_and_delete({"chat_id": chat_id, "user_id": target_id}, sort=[("timestamp", -1)])
+    latest_warn = warnings_collection.find_one_and_delete(
+        {"chat_id": chat_id, "user_id": target_id},
+        sort=[("timestamp", -1)]
+    )
     if latest_warn: await update.message.reply_text(f"Removed the latest warning from {target_name}.")
     else: await update.message.reply_text(f"{target_name} has no warnings to remove.")
 
 @admin_only
 async def resetwarn_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # ... (code is the same as previous response)
+    """Resets all warnings for a user."""
     chat_id = await resolve_target_chat_id(update, context)
     target_id, target_name = await extract_user(update, context)
     if not target_id:
@@ -121,8 +149,6 @@ async def resetwarn_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     warnings_collection.delete_many({"chat_id": chat_id, "user_id": target_id})
     await update.message.reply_text(f"Reset all warnings for {target_name}.")
-
-# --- NEWLY IMPLEMENTED COMMANDS ---
 
 @admin_only
 async def resetallwarns_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -139,7 +165,6 @@ async def resetallwarns_callback(update: Update, context: ContextTypes.DEFAULT_T
     if not await is_user_admin(context, chat_id, query.from_user.id):
         await query.answer("Only admins can do this.", show_alert=True)
         return
-
     if query.data.endswith("confirm"):
         warnings_collection.delete_many({"chat_id": chat_id})
         await query.edit_message_text("✅ All warnings in this chat have been reset.")
@@ -151,19 +176,15 @@ async def warnings_status_command(update: Update, context: ContextTypes.DEFAULT_
     """Gets the chat's current warning settings."""
     chat_id = await resolve_target_chat_id(update, context)
     settings = chat_settings_collection.find_one({"_id": chat_id}) or {}
-    
     limit = settings.get("warn_limit", 3)
     mode = settings.get("warn_mode", "kick")
     duration_sec = settings.get("warn_mode_duration_seconds", 0)
     time_sec = settings.get("warn_time_seconds", 0)
-
     msg = (f"<b>Warning Settings</b>\n\n"
            f"• <b>Limit</b>: <code>{limit}</code> warnings\n"
            f"• <b>Action</b>: <code>{mode.upper()}</code>")
-    if duration_sec > 0:
-        msg += f" for {humanize_delta(timedelta(seconds=duration_sec))}"
+    if duration_sec > 0: msg += f" for {humanize_delta(timedelta(seconds=duration_sec))}"
     msg += f"\n• <b>Warning Expiration</b>: <code>{'Permanent' if time_sec == 0 else humanize_delta(timedelta(seconds=time_sec))}</code>"
-    
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
 @admin_only
@@ -174,14 +195,11 @@ async def warnmode_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not args or args[0].lower() not in ["ban", "kick", "mute", "tban", "tmute"]:
         await update.message.reply_text("Usage: `/warnmode <ban/kick/mute/tban/tmute> [duration]`")
         return
-
     mode = args[0].lower()
     duration = parse_duration(args[1]) if len(args) > 1 else None
-    
     if mode in ["tban", "tmute"] and not duration:
         await update.message.reply_text("You must provide a duration for temporary actions.")
         return
-
     chat_settings_collection.update_one(
         {"_id": chat_id},
         {"$set": {"warn_mode": mode, "warn_mode_duration_seconds": duration.total_seconds() if duration else 0}},
@@ -195,18 +213,14 @@ async def warntime_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("Usage: `/warntime <duration>` (e.g., 4w, 7d). Use 'off' for permanent warnings.")
         return
-        
     duration_str = context.args[0].lower()
     if duration_str == 'off':
-        duration_seconds = 0
-        msg = "Warnings are now permanent."
+        duration_seconds, msg = 0, "Warnings are now permanent."
     else:
         duration = parse_duration(duration_str)
         if not duration:
             await update.message.reply_text("Invalid duration format.")
             return
-        duration_seconds = duration.total_seconds()
-        msg = f"Warnings will now expire after {humanize_delta(duration)}."
-
+        duration_seconds, msg = duration.total_seconds(), f"Warnings will now expire after {humanize_delta(duration)}."
     chat_settings_collection.update_one({"_id": chat_id}, {"$set": {"warn_time_seconds": duration_seconds}}, upsert=True)
     await update.message.reply_text(msg)
