@@ -36,7 +36,7 @@ async def ask_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
     try:
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
         # Use generate_content_async for non-blocking API calls
         response = await model.generate_content_async(question)
         
