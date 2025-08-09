@@ -2,10 +2,14 @@ from telegram import Update, User, ChatMember
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
+# --- Local Imports ---
 from database.db import db
 from utils.decorators import admin_only
 from utils.parsers import extract_user
 from utils.context import resolve_target_chat_id
+
+# --- Service Integrations ---
+from modules.log_channels.service import log_action
 
 chat_settings_collection = db["chat_settings"]
 
@@ -21,6 +25,7 @@ def get_chat_settings(chat_id: int):
 @admin_only
 async def promote(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Promote a user to a 'bot admin'."""
+    admin = update.effective_user
     target_chat_id = await resolve_target_chat_id(update, context)
     target_chat = await context.bot.get_chat(target_chat_id)
     
@@ -48,10 +53,20 @@ async def promote(update: Update, context: ContextTypes.DEFAULT_TYPE):
         upsert=True
     )
     await update.message.reply_text(f"✅ Successfully promoted {target_user_name} (`{target_user_id}`) to bot admin in **{target_chat.title}**!", parse_mode=ParseMode.HTML)
+    
+    # --- LOGGING INTEGRATION ---
+    log_msg = (
+        f"<b>#PROMOTE</b>\n"
+        f"<b>Admin:</b> {admin.mention_html()} (<code>{admin.id}</code>)\n"
+        f"<b>User:</b> {target_user_name} (<code>{target_user_id}</code>)"
+    )
+    await log_action(context, target_chat_id, "admins", log_msg)
+
 
 @admin_only
 async def demote(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Demote a user from being a 'bot admin'."""
+    admin = update.effective_user
     target_chat_id = await resolve_target_chat_id(update, context)
     target_chat = await context.bot.get_chat(target_chat_id)
     
@@ -78,6 +93,14 @@ async def demote(update: Update, context: ContextTypes.DEFAULT_TYPE):
         {"$pull": {"promoted_users": target_user_id}}
     )
     await update.message.reply_text(f"✅ Successfully demoted {target_user_name} (`{target_user_id}`) in **{target_chat.title}**.", parse_mode=ParseMode.HTML)
+
+    # --- LOGGING INTEGRATION ---
+    log_msg = (
+        f"<b>#DEMOTE</b>\n"
+        f"<b>Admin:</b> {admin.mention_html()} (<code>{admin.id}</code>)\n"
+        f"<b>User:</b> {target_user_name} (<code>{target_user_id}</code>)"
+    )
+    await log_action(context, target_chat_id, "admins", log_msg)
 
 @admin_only
 async def admin_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -125,6 +148,7 @@ async def admin_settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handles /anonadmin and /adminerror."""
     command = update.message.text.split()[0].lower().lstrip('/!')
     setting_key = "allow_anon_admin" if command == "anonadmin" else "send_admin_error"
+    admin = update.effective_user
     
     target_chat_id = await resolve_target_chat_id(update, context)
     args = context.args
@@ -141,3 +165,11 @@ async def admin_settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     status_msg = "enabled" if enabled else "disabled"
     await update.message.reply_text(f"✅ Setting `{command}` has been **{status_msg}**.", parse_mode=ParseMode.MARKDOWN_V2)
 
+    # --- LOGGING INTEGRATION ---
+    log_msg = (
+        f"<b>#SETTINGS_CHANGE</b>\n"
+        f"<b>Admin:</b> {admin.mention_html()}\n"
+        f"<b>Setting:</b> <code>{command}</code>\n"
+        f"<b>New Value:</b> {status_msg.capitalize()}"
+    )
+    await log_action(context, target_chat_id, "settings", log_msg)
