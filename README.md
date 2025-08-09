@@ -1,51 +1,42 @@
-# My Telegram Bot
+# Modular Telegram Bot
 
-A powerful, modular Telegram bot built in Python to manage and enhance group chats.
+![Replit](https://img.shields.io/badge/Hosted%20on-Replit-blue?style=for-the-badge&logo=replit)
 
-## Features
+A powerful, modular Telegram group management bot built with Python, MongoDB, and hosted on Replit. This bot is designed for scalability and easy feature extension.
 
-This bot is built with a modular architecture and includes the following features:
-- Admin Tools & Moderation (Bans, Warnings, Locks)
-- Anti-Spam & Anti-Raid Protection
-- Welcome Greetings, Rules, and Notes
-- Gamification with an XP/Level System
-- And many more!
+## 🌟 Features
 
-## Setup & Installation
+This bot is packed with features, organized into logical modules:
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <your-repository-url>
-    cd TelegramBot
-    ```
+* **Core Moderation:** Bans, Mutes, Kicks, Warnings, Purges, Reports.
+* **Advanced Security:** Anti-Raid, Anti-Flood, Misban (Anti-Betrayal), CAPTCHA.
+* **Content Control:** Locks, Blocklists, Force Subscribe, Clean Service Messages.
+* **Engagement & Fun:** Gamification (XP/Levels), AI Q&A, Games (Quiz, etc.), Echo.
+* **Utility & Management:** Notes, Rules, Pinning, Greetings, Import/Export, Log Channels, and much more.
+* **Powerful Admin Tools:** Remote chat management via `/connect`, command disabling, and a nested settings panel.
 
-2.  **Create a virtual environment:**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-    ```
+## 🚀 Setup & Installation
 
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+To run your own instance of this bot, follow these steps:
 
-4.  **Configure Environment Variables:**
-    Create a `.env` file in the root directory and add your bot's credentials. Alternatively, if using Replit, use the built-in Secrets tool.
-    ```
-    BOT_TOKEN="YOUR_TELEGRAM_BOT_TOKEN"
-    ADMIN_IDS="12345678,87654321" # Comma-separated list of super admin user IDs
-    ```
+1.  **Fork this Repository** on GitHub or clone it.
+2.  **Create a Replit Project:** Import the repository into a new Python Replit.
+3.  **Set up MongoDB:** Create a free cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and get your connection URI.
+4.  **Configure Secrets:** In the Replit "Secrets" tab, add the following environment variables:
+    * `BOT_TOKEN`: Your bot token from @BotFather.
+    * `MONGO_URI`: Your MongoDB connection string.
+    * `BOT_OWNERS`: A comma-separated list of numeric owner User IDs.
+    * `GEMINI_API_KEY`: Your free API key from Google AI Studio for the `/ask` command.
+    .
+5.  **Install Dependencies:** Run `pip install -r requirements.txt` in the Replit Shell.
+6.  **Run:** Click the "Run" button in Replit. Use a service like [UptimeRobot](https://uptimerobot.com/) to ping the bot's web URL to keep it online 24/7.
 
-5.  **Run the bot:**
-    ```bash
-    python main.py
-    ```
+## Usage
 
-## Project Structure
+All bot configuration is handled through commands directly in your Telegram chat. Start by adding the bot to your group and promoting it to an administrator.
 
-The bot is organized into a modular structure:
-- `main.py`: The main entry point for the bot.
-- `core/`: Contains the core logic, configuration, and keep-alive server.
-- `modules/`: Each `.py` file represents a feature module with its own comman
-- d handlers.
+- Use `/help` to discover commands.
+- Use the interactive `/settings` panel to configure modules.
+
+---
+*This bot was built with the assistance of Google's Gemini.*
