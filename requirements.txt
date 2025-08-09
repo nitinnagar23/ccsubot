@@ -3,3 +3,4 @@ pymongo[srv]
 Flask
 pytz
 google-generativeai
+nest-asyncio
