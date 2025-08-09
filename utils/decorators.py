@@ -7,7 +7,10 @@ from telegram.error import BadRequest
 from .permissions import is_user_owner, is_user_creator, is_user_admin
 from .context import resolve_target_chat_id
 from bot_core.registry import COMMAND_REGISTRY
-from database.db import chat_settings_collection
+from database.db import db # <-- CORRECT: Import the main db object
+
+# CORRECT: Get the collection from the db object
+chat_settings_collection = db["chat_settings"]
 
 def owner_only(func):
     @wraps(func)
@@ -39,7 +42,6 @@ def admin_only(func):
         if not user: return
 
         target_chat_id = await resolve_target_chat_id(update, context)
-
         if await is_user_admin(context, target_chat_id, user.id):
             return await func(update, context, *args, **kwargs)
         else:
@@ -64,7 +66,7 @@ def check_disabled(func):
 
         command_match = re.match(r"[!/](\w+)", update.message.text)
         if not command_match: return
-        command = command_match.group(1)
+        command = command_match.group(1).lower()
 
         settings = chat_settings_collection.find_one({"_id": chat.id}) or {}
         disabled_cmds = settings.get("disabled_commands", [])
