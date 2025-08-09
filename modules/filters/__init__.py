@@ -1,7 +1,7 @@
 import re
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup 
 from telegram.ext import CommandHandler, MessageHandler, filters, CallbackQueryHandler
 
+# This import will now succeed because the functions exist in commands.py
 from .commands import add_filter, stop_filter, list_filters, check_filters, stopall_command, stopall_callback
 from bot_core.registry import COMMAND_REGISTRY, HELP_REGISTRY
 
@@ -22,7 +22,7 @@ def load_module(application):
         "filter": add_filter,
         "filters": list_filters,
         "stop": stop_filter,
-        "stopall": stopall_command,  # <-- FIX #1: Added the /stopall handler
+        "stopall": stopall_command,
     }
 
     for cmd_name, handler_func in handlers.items():
@@ -32,10 +32,8 @@ def load_module(application):
             handler_func
         ))
 
-    # --- FIX #2: Added the missing callback handler ---
     application.add_handler(CallbackQueryHandler(stopall_callback, pattern="^filter:stopall_"))
 
-    # Add the main listener for all text and command messages
     application.add_handler(MessageHandler(
         (filters.TEXT | filters.COMMAND) & ~filters.UpdateType.EDITED,
         check_filters
