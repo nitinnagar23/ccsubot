@@ -2,13 +2,13 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.constants import ChatMemberStatus
 
-from database.db import db
+from database.db import db # <-- CORRECT: Import the main db object
 from .config import BOT_OWNERS
 
+# CORRECT: Get the collection from the db object
 chat_settings_collection = db["chat_settings"]
 
 # --- Granular Permission Checkers ---
-
 async def is_user_creator(context: ContextTypes.DEFAULT_TYPE, chat_id: int, user_id: int) -> bool:
     """Checks if a user is the creator of the chat."""
     try:
@@ -42,14 +42,10 @@ def is_user_approved(chat_id: int, user_id: int) -> bool:
     settings = chat_settings_collection.find_one({"_id": chat_id}, {"approved_users": 1})
     return bool(settings and user_id in settings.get("approved_users", []))
 
-
-# --- Combined Permission Checker ---
-
 async def is_user_admin(context: ContextTypes.DEFAULT_TYPE, chat_id: int, user_id: int) -> bool:
     """Checks if a user is an admin by any method (Telegram, Bot, or Anon)."""
     if user_id == 1087968824: # Anonymous Admin
         settings = chat_settings_collection.find_one({"_id": chat_id}, {"allow_anon_admin": 1})
         if settings and settings.get("allow_anon_admin", False):
             return True
-            
     return await is_user_telegram_admin(context, chat_id, user_id) or is_user_bot_admin(chat_id, user_id)
