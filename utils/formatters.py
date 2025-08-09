@@ -5,6 +5,14 @@ from telegram.constants import ParseMode
 
 from database.db import db
 
+# --- NEW FUNCTION ---
+def escape_markdown_v2(text: str) -> str:
+    """Escapes text for Telegram's MarkdownV2 parse mode."""
+    # List of all reserved characters in MarkdownV2
+    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    # Use re.sub to add a backslash before each reserved character
+    return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
+
 # --- The Message Formatting Pipeline ---
 
 def select_random(text: str) -> str:
@@ -37,7 +45,6 @@ def apply_fillings(text: str, update: Update):
         chat_settings = db.chat_settings.find_one({"_id": chat.id}) or {}
         button_text = chat_settings.get("rules_button_text", "Read The Rules")
         
-        # We convert the filling into markdown for a button that links to a special #rules note
         text = text.replace("{rules:same}", f"[{button_text}](buttonurl://#rules:same)")
         text = text.replace("{rules}", f"[{button_text}](buttonurl://#rules)")
         
@@ -49,13 +56,12 @@ def parse_buttons(text: str) -> tuple[str, InlineKeyboardMarkup | None]:
     and an InlineKeyboardMarkup.
     """
     buttons = []
-    # Regex to find [text](buttonurl://url)
     matches = list(re.finditer(r"\[(.+?)\]\(buttonurl:\/\/(.+?)\)", text))
     
     clean_text = re.sub(r"\[(.+?)\]\(buttonurl:\/\/(.+?)\)\n?", "", text).strip()
     
     if not matches:
-        return text, None # Return original text if no buttons
+        return text, None
 
     row = []
     for match in matches:
@@ -92,6 +98,5 @@ def extract_send_options(text: str) -> dict:
         options['disable_notification'] = True
     if "{protect}" in text:
         options['protect_content'] = True
-    # TODO: Add {preview} and {mediaspoiler} support here
     
     return options
