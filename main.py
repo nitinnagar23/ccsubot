@@ -6,7 +6,7 @@ import traceback
 import html
 import json
 import asyncio
-import nest_asyncio  # --- Solves the event loop conflict
+import nest_asyncio
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, PicklePersistence, ContextTypes
@@ -14,7 +14,7 @@ from telegram.constants import ParseMode
 
 from keep_alive import keep_alive
 
-# --- Apply the patch to allow nested event loops in Replit ---
+# Apply the patch to allow nested event loops in Replit
 nest_asyncio.apply()
 
 # --- Bot-wide Logging Setup ---
@@ -38,7 +38,8 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
     tb_string = "".join(tb_list)
 
-    # Build the message
+    # --- CORRECTION ---
+    # We now use html.escape() on all dynamic content to prevent parsing errors.
     update_str = update.to_dict() if isinstance(update, Update) else str(update)
     message = (
         f"An exception was raised while handling an update\n\n"
@@ -68,10 +69,7 @@ async def main():
         logger.error("❌ BOT_TOKEN not found in environment variables!")
         return
         
-    # Create a persistence object to save jobs across restarts
     persistence = PicklePersistence(filepath="bot_persistence")
-
-    # Build the application with persistence and error handling
     application = ApplicationBuilder().token(TOKEN).persistence(persistence).build()
     application.add_error_handler(error_handler)
     
