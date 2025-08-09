@@ -69,8 +69,11 @@ async def add_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     filters_collection.update_one(
         {"chat_id": chat_id, "trigger": trigger_str},
-        {"$set": {"reply": clean_reply, "file_id": file_id, "file_type": file_type, "permission": permission, "match_type": match_type, "is_command": is_command, "command_description": command_description}}, 
-        upsert=True
+        {"$set": {
+            "reply": clean_reply, "file_id": file_id, "file_type": file_type, 
+            "permission": permission, "match_type": match_type, 
+            "is_command": is_command, "command_description": command_description
+        }}, upsert=True
     )
     await update.message.reply_text(f"✅ Filter for `{trigger_str}` has been saved.", parse_mode=ParseMode.MARKDOWN_V2)
     if is_command: await _update_chat_commands(context, chat_id)
@@ -101,6 +104,29 @@ async def list_filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = "<b>Active filters in this chat:</b>\n"
     msg += "\n".join([f"- <code>{f['trigger']}</code>" for f in all_filters])
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
+
+@admin_only
+async def stopall_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Asks for confirmation to delete all filters."""
+    keyboard = InlineKeyboardMarkup([[
+        InlineKeyboardButton("⚠️ Yes, delete all filters", callback_data="filter:stopall_confirm"),
+        InlineKeyboardButton("Cancel", callback_data="filter:stopall_cancel")]])
+    await update.message.reply_text("Are you sure you want to delete ALL filters in this chat? This cannot be undone.", reply_markup=keyboard)
+
+async def stopall_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles the /stopall confirmation callback."""
+    query = update.callback_query
+    chat_id = query.message.chat.id
+    if not await is_user_admin(context, chat_id, query.from_user.id):
+        await query.answer("Only admins can perform this action.", show_alert=True)
+        return
+
+    if query.data.endswith("confirm"):
+        filters_collection.delete_many({"chat_id": chat_id})
+        await query.edit_message_text("✅ All filters for this chat have been deleted.")
+        await _update_chat_commands(context, chat_id)
+    else:
+        await query.edit_message_text("Action cancelled.")
 
 # --- The Core Message Handler ---
 async def check_filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -149,10 +175,8 @@ async def check_filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else:
                     sent_message = await message.reply_text(final_text, reply_markup=keyboard, parse_mode=ParseMode.HTML, disable_web_page_preview=True, **send_options)
                 
-                # --- INTEGRATION ---
                 if sent_message:
                     schedule_bot_message_deletion(context, sent_message, "filter")
             except Exception as e:
                 print(f"Failed to send filter reply: {e}")
-
             return
