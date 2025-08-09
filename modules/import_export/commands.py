@@ -1,7 +1,7 @@
 import json
 import io
-from telegram import Update
-from telegram.ext import ContextTypes, CallbackQueryHandler, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes, CallbackQueryHandler
 from telegram.constants import ParseMode
 
 from database.db import db
