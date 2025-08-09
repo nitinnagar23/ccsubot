@@ -11,6 +11,7 @@ chat_settings_collection = db["chat_settings"]
 
 # --- Constants for Validation and Help Text ---
 LOG_CATEGORIES = {
+    "admins": "Bot admin promotions and demotions.", 
     "bans": "Bans, mutes, kicks, and unbans/unmutes.",
     "warns": "Warnings issued and removed.",
     "notes": "Notes being saved and cleared.",
