@@ -1,9 +1,15 @@
-# Python
+# Python virtual environment and cache files
 __pycache__/
 *.pyc
 venv/
+*.env
+
+# Replit specific files
+.replit
+replit.nix
+
+# Secrets file (VERY IMPORTANT)
 .env
 
-# IDE specific
-.idea/
-.vscode/
+# Bot persistence file (runtime data, not code)
+bot_persistence
