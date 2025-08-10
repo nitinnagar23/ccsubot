@@ -52,5 +52,5 @@ async def ask_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # This block now safely handles errors from the API
         # It escapes the raw error message before sending it back.
         escaped_error = escape_markdown_v2(str(e))
-        error_message = f"Sorry, I encountered an error while processing your request\.\n\n`{escaped_error}`"
+        error_message = f"Sorry, I encountered an error while processing your request\\.\n\n`{escaped_error}`"
         await processing_message.edit_text(error_message, parse_mode=ParseMode.MARKDOWN_V2)
