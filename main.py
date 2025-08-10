@@ -9,12 +9,12 @@ import asyncio
 import nest_asyncio
 
 from telegram import Update
-from telegram.ext import ApplicationBuilder, PicklePersistence, ContextTypes
+from telegram.ext import Application, ApplicationBuilder, PicklePersistence, ContextTypes
 from telegram.constants import ParseMode
 
 from keep_alive import keep_alive
 
-# Apply the patch to allow nested event loops in Replit
+# Apply the patch to allow nested event loops in Replit/Render
 nest_asyncio.apply()
 
 # --- Bot-wide Logging Setup ---
@@ -38,18 +38,16 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
     tb_string = "".join(tb_list)
 
-    # --- CORRECTION ---
-    # We now use html.escape() on all dynamic content to prevent parsing errors.
+    # Build the message using html.escape for safety
     update_str = update.to_dict() if isinstance(update, Update) else str(update)
     message = (
-        f"An exception was raised while handling an update\n\n"
-        f"<b>Update:</b>\n<pre>{html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}</pre>\n\n"
-        f"<b>Context Chat Data:</b>\n<pre>{html.escape(str(context.chat_data))}</pre>\n\n"
-        f"<b>Context User Data:</b>\n<pre>{html.escape(str(context.user_data))}</pre>\n\n"
-        f"<b>Traceback:</b>\n<pre>{html.escape(tb_string)}</pre>"
+        f"<b>An exception was raised:</b>\n\n"
+        f"<pre>{html.escape(tb_string)}</pre>\n\n"
+        f"<b>Full Update:</b>\n"
+        f"<pre>{html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}</pre>"
     )
     
-    # Split the message into chunks if it's too long for a single Telegram message
+    # Split the message into chunks if it's too long
     for i in range(0, len(message), 4096):
         try:
             await context.bot.send_message(
@@ -57,6 +55,11 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
             )
         except Exception as e:
             logger.error(f"Failed to send error log to developer channel: {e}")
+
+# --- Graceful Shutdown Function ---
+async def post_shutdown(application: Application):
+    """This function is called after the bot is stopped."""
+    logger.info("Bot has been shut down. Persistence should be saved.")
 
 
 # --- Main Bot Function ---
@@ -70,7 +73,14 @@ async def main():
         return
         
     persistence = PicklePersistence(filepath="bot_persistence")
-    application = ApplicationBuilder().token(TOKEN).persistence(persistence).build()
+
+    application = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        .persistence(persistence)
+        .post_shutdown(post_shutdown) # Register the graceful shutdown function
+        .build()
+    )
     application.add_error_handler(error_handler)
     
     logger.info("Telegram application built.")
